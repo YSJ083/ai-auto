@@ -1,0 +1,12 @@
+# Local execution data may include credentials, business data, reports, or screenshots.
+/execution/
+/outputs/
+
+# Local environment and generated Python/test artifacts.
+.env
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/

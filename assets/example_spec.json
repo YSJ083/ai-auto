@@ -1,0 +1,118 @@
+{
+ "name": "接口自动测试 · 最小可跑样例",
+ "spec_version": "1.0",
+ "env": "test",
+ "base_url": "http://10.31.0.101",
+ "api_prefix": "/common/idaas/v1",
+ "timeout": 15,
+ "verify_tls": true,
+ "auth": {
+  "type": "header",
+  "header": "app-sec-at",
+  "token_env": "AUTOTEST_TOKEN",
+  "probe": {
+   "method": "GET",
+   "path": "/auth/tokenValid",
+   "断言": [{"类型": "成功标志", "等于": true}]
+  }
+ },
+ "vars": {},
+ "cases": [
+  {
+   "id": "TC-SMOKE-001",
+   "模块": "认证",
+   "用例标题": "登录态有效时可读取当前用户信息",
+   "优先级": "P0",
+   "用例类型": "功能",
+   "自动化": "auto",
+   "依据": "所有需要身份的用例都以登录态有效为前提，这条挂了后面都不必看。",
+   "steps": [
+    {
+     "名称": "查询当前登录人",
+     "method": "GET",
+     "path": "/user/self/info",
+     "断言": [
+      {"类型": "状态码", "等于": 200},
+      {"类型": "成功标志", "等于": true},
+      {"类型": "JSON字段", "路径": "data.id", "非空": true},
+      {"类型": "JSON字段", "路径": "data.mobile", "正则": "^1\\d{2}\\*{4}\\d{4}$"},
+      {"类型": "耗时", "小于": 3000}
+     ]
+    }
+   ]
+  },
+  {
+   "id": "TC-SMOKE-002",
+   "模块": "我的应用",
+   "用例标题": "默认查询返回分页自洽的应用列表",
+   "优先级": "P0",
+   "用例类型": "功能",
+   "自动化": "auto",
+   "依据": "列表接口是入口页，分页字段不自洽会导致前端翻页错位。",
+   "steps": [
+    {
+     "名称": "查询第一页",
+     "method": "GET",
+     "path": "/app/my-app",
+     "params": {"status": "1", "pageNo": "1", "pageSize": "5"},
+     "提取": {"firstId": "data.records.0.id", "total": "data.total"},
+     "断言": [
+      {"类型": "成功标志", "等于": true},
+      {"类型": "JSON字段", "路径": "data.records", "是数组": true},
+      {"类型": "JSON字段", "路径": "data.pageSize", "等于": 5},
+      {"类型": "JSON字段", "路径": "data.total", "大于等于": 1}
+     ]
+    },
+    {
+     "名称": "查询第二页且首条与第一页不同",
+     "method": "GET",
+     "path": "/app/my-app",
+     "params": {"status": "1", "pageNo": "2", "pageSize": "5"},
+     "断言": [
+      {"类型": "成功标志", "等于": true},
+      {"类型": "JSON字段", "路径": "data.records.0.id", "不等于": "${firstId}"}
+     ]
+    }
+   ]
+  },
+  {
+   "id": "TC-SMOKE-003",
+   "模块": "横切检查",
+   "用例标题": "不带凭据访问业务接口应被明确拒绝",
+   "优先级": "P0",
+   "用例类型": "安全",
+   "自动化": "auto",
+   "失败即止": false,
+   "依据": "未认证必须被拒绝，且不能用「空列表 + success=true」伪装成没有数据。",
+   "steps": [
+    {
+     "名称": "匿名查我的应用",
+     "method": "GET",
+     "path": "/app/my-app",
+     "params": {"status": "1", "pageNo": "1", "pageSize": "5"},
+     "no_auth": true,
+     "断言": [{"类型": "成功标志", "等于": false}]
+    },
+    {
+     "名称": "匿名查本人日志",
+     "method": "GET",
+     "path": "/log/user/self-login",
+     "params": {"pageNo": "1", "pageSize": "5"},
+     "no_auth": true,
+     "断言": [{"类型": "成功标志", "等于": false}]
+    }
+   ]
+  },
+  {
+   "id": "TC-MANUAL-001",
+   "模块": "认证",
+   "用例标题": "账号密码加图形验证码登录成功并下发 token",
+   "优先级": "P0",
+   "用例类型": "功能",
+   "自动化": "manual",
+   "依据": "图形验证码需要人识别，当前由人工执行；配 browser_login 后可转自动。",
+   "阻塞原因": "验证码 + 前端 RSA 加密，接口层无法直接登录",
+   "steps": []
+  }
+ ]
+}

@@ -1,0 +1,35 @@
+# ai-auto-test 依赖清单
+#
+# 核心事实：接口通道（跑 HTTP 用例）**零第三方依赖**，全部走 Python 标准库
+# （urllib / json / ssl）。所以「只跑接口用例」时，本文件里的包一个都不用装。
+# 下面两类是按能力开关的，装了才启用，没装就自动降级，不会让整轮执行失败。
+#
+# 建议装进独立 venv，别污染系统 Python：
+#   python3 -m venv ~/.venvs/autotest
+#   ~/.venvs/autotest/bin/pip install -r requirements.txt
+#   ~/.venvs/autotest/bin/python scripts/auto_test.py run spec.json
+#
+# Python >= 3.9（实测 3.13.12）
+
+# ---- 浏览器通道 ----------------------------------------------------------
+# 启用「ui」动作与 页面 / URL / 控制台 / 网络 四类断言。
+# 未安装时：UI 用例判 blocked（环境问题，不计入通过率），接口用例照常跑。
+playwright>=1.40
+
+# ---- 验证码识别 ----------------------------------------------------------
+# 启用「识别验证码」动作与 captcha: 提取。
+# 注意：ddddocr 会连带安装 onnxruntime + numpy + opencv，体积大，
+#       首次安装实测约 17 分钟且中途无输出，别误以为卡死。
+# 未安装时：自动退到 tesseract；两者都没有时验证码步骤判 blocked。
+ddddocr>=1.5
+Pillow>=10.0
+
+# ---- 系统级依赖（不是 pip 包，需单独安装）--------------------------------
+# tesseract：ddddocr 不可用时的兜底 OCR，准确率约 20%，仅作降级
+#   macOS          brew install tesseract
+#   Debian/Ubuntu  sudo apt-get install -y tesseract-ocr
+#
+# ---- 浏览器二进制 --------------------------------------------------------
+# 默认复用系统 Chrome（规格里 ui.browser.channel = "chrome"），无需额外下载。
+# 要用 Playwright 自带内核时再执行：
+#   playwright install chromium

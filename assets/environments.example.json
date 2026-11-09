@@ -1,0 +1,70 @@
+{
+ "default": "test",
+ "profiles": {
+  "test": {
+   "base_url": "http://10.31.0.101",
+   "api_prefix": "/common/idaas/v1",
+   "timeout": 15,
+   "verify_tls": true,
+   "vars": {"tenantId": "1001"},
+   "auth": {
+    "type": "header",
+    "header": "app-sec-at",
+    "token_env": "AUTOTEST_TOKEN",
+    "probe": {
+     "method": "GET",
+     "path": "/auth/tokenValid",
+     "断言": [{"类型": "成功标志", "等于": true}]
+    }
+   },
+   "ui": {
+    "headless": true,
+    "timeout": 20000,
+    "browser": {"channel": "chrome"},
+    "viewport": {"width": 1440, "height": 900}
+   }
+  },
+  "test-browser": {
+   "base_url": "http://10.31.0.101",
+   "api_prefix": "/common/idaas/v1",
+   "auth": {
+    "type": "browser_login",
+    "storage_state": "../seeds/state.json",
+    "save_state": "../seeds/state.json",
+    "token_from": "localStorage:token",
+    "header": "app-sec-at",
+    "login_url": "/login",
+    "probe": {
+     "method": "GET",
+     "path": "/auth/tokenValid",
+     "断言": [{"类型": "成功标志", "等于": true}]
+    }
+   },
+   "ui": {"headless": true, "browser": {"channel": "chrome"}}
+  },
+  "uat": {
+   "base_url": "http://10.31.0.102",
+   "api_prefix": "/common/idaas/v1",
+   "timeout": 20,
+   "auth": {
+    "type": "form_login",
+    "header": "app-sec-at",
+    "login": {
+     "method": "POST",
+     "path": "/auth/login",
+     "json": {"username": "${env.UAT_USER}", "password": "${env.UAT_PASS}"},
+     "断言": [{"类型": "成功标志", "等于": true}],
+     "extract": {"token": "data.token"}
+    },
+    "probe": {"method": "GET", "path": "/auth/tokenValid"}
+   }
+  },
+  "local": {
+   "base_url": "http://127.0.0.1:8080",
+   "api_prefix": "/api/v1",
+   "verify_tls": false,
+   "auth": {"type": "none"}
+  }
+ },
+ "说明": "这个文件演示环境档怎么写。真实项目里 auth 只放凭据的引用方式（环境变量名 / 文件路径），绝不放凭据本体。配好的文件放在规格同目录并命名为 environments.json，执行时用 --env 选择。"
+}
